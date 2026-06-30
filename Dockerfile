@@ -2,25 +2,24 @@
 # Dockerfile for Node.js Bidding Service
 # ============================================
 
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 WORKDIR /app
+
+# Copy dependency configs
 COPY package.json package-lock.json* ./
+
+# Install dependencies (including devDependencies for build)
 RUN npm ci
+
+# Copy source files
 COPY . .
 
-FROM node:20-alpine AS runner
-WORKDIR /app
+# Build project
+RUN npm run build
 
-ENV NODE_ENV=production
+# Prune devDependencies to keep the runtime small
+RUN npm prune --production
 
-RUN addgroup --system --gid 1001 appgroup
-RUN adduser --system --uid 1001 appuser
+EXPOSE 3000
 
-COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
-COPY --from=builder --chown=appuser:appgroup /app .
-
-USER appuser
-
-EXPOSE 3001
-
-CMD ["node", "src/index.js"]
+CMD ["node", "dist/main.js"]

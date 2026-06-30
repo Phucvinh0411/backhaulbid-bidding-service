@@ -3,6 +3,7 @@ name: CI - Bidding Service (Node.js)
 on:
   pull_request:
     branches:
+      - main
       - develop
 
 jobs:
