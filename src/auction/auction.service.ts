@@ -23,6 +23,7 @@ export class AuctionService {
   async create(shipperId: string, dto: CreateAuctionDto) {
     this.validateSchedule(dto.registrationEndTime, dto.startTime, dto.endTime);
     const maxPrice = this.parseAmount(dto.maxPrice, 'maxPrice');
+    const priceStep = this.parseAmount(dto.priceStep, 'priceStep');
     const fee = calculateParticipationFee(maxPrice);
     const depositAmount = dto.isDepositRequired
       ? this.parseAmount(dto.depositAmount, 'depositAmount')
@@ -32,10 +33,17 @@ export class AuctionService {
       throw new BadRequestException('depositAmount cannot exceed maxPrice');
     }
 
+    const origin = `${dto.pickupLocation.province} - ${dto.pickupLocation.locationName}`;
+    const destination = `${dto.deliveryLocation.province} - ${dto.deliveryLocation.locationName}`;
+
     const auction = await this.auctionModel.create({
       shipperId,
       ...dto,
+      origin,
+      destination,
       maxPrice: Types.Decimal128.fromString(maxPrice.toFixed(2)),
+      priceStep: Types.Decimal128.fromString(priceStep.toFixed(2)),
+      goodsValue: dto.goodsValue ? Types.Decimal128.fromString(Number(dto.goodsValue).toFixed(2)) : undefined,
       depositAmount:
         depositAmount === null
           ? null
@@ -93,6 +101,21 @@ export class AuctionService {
     this.validateSchedule(nextRegistrationEnd, nextStart, nextEnd);
 
     const update: Record<string, unknown> = { ...dto };
+    
+    if (dto.pickupLocation) {
+      update.origin = `${dto.pickupLocation.province} - ${dto.pickupLocation.locationName}`;
+    }
+    if (dto.deliveryLocation) {
+      update.destination = `${dto.deliveryLocation.province} - ${dto.deliveryLocation.locationName}`;
+    }
+    
+    if (dto.priceStep !== undefined) {
+      update.priceStep = this.parseAmount(dto.priceStep, 'priceStep').toFixed(2);
+    }
+    if (dto.goodsValue !== undefined) {
+      update.goodsValue = Number(dto.goodsValue).toFixed(2);
+    }
+
     if (dto.maxPrice !== undefined) {
       const maxPrice = this.parseAmount(dto.maxPrice, 'maxPrice');
       const fee = calculateParticipationFee(maxPrice);
@@ -236,11 +259,20 @@ export class AuctionService {
       shipperId: auction.shipperId,
       title: auction.title,
       goodsType: auction.goodsType,
+      weight: auction.weight,
+      volume: auction.volume,
+      goodsValue: auction.goodsValue?.toString(),
       vehicleTypeRequired: auction.vehicleTypeRequired,
+      requiredTemp: auction.requiredTemp,
+      vehicleSpecs: auction.vehicleSpecs,
       origin: auction.origin,
       destination: auction.destination,
-      weight: auction.weight,
+      pickupLocation: auction.pickupLocation,
+      deliveryLocation: auction.deliveryLocation,
+      auctionType: auction.auctionType,
       maxPrice: auction.maxPrice.toString(),
+      priceStep: auction.priceStep.toString(),
+      maxBids: auction.maxBids,
       images: auction.images,
       notes: auction.notes,
       isDepositRequired: auction.isDepositRequired,

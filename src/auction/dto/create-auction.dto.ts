@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,7 +11,55 @@ import {
   IsUrl,
   Matches,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { AuctionType } from '../../common/enums/auction-type.enum';
+
+export class LocationDetailDto {
+  @IsString()
+  @IsNotEmpty()
+  locationName!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  province!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  address!: string;
+
+  @IsOptional()
+  @IsString()
+  contactName?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  earliestTime?: Date;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  latestTime?: Date;
+}
+
+export class VehicleSpecsDto {
+  @IsOptional()
+  @IsNumber()
+  length?: number;
+
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+}
 
 export class CreateAuctionDto {
   @IsString()
@@ -21,28 +70,65 @@ export class CreateAuctionDto {
   @IsNotEmpty()
   goodsType!: string;
 
-  @IsString()
-  @IsNotEmpty()
-  vehicleTypeRequired!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  origin!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  destination!: string;
-
   @Type(() => Number)
   @IsNumber()
   @Min(0.01)
   weight!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  volume?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message: 'goodsValue must be a decimal string',
+  })
+  goodsValue?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  vehicleTypeRequired!: string;
+
+  @IsOptional()
+  @IsString()
+  requiredTemp?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => VehicleSpecsDto)
+  vehicleSpecs?: VehicleSpecsDto;
+
+  @ValidateNested()
+  @Type(() => LocationDetailDto)
+  pickupLocation!: LocationDetailDto;
+
+  @ValidateNested()
+  @Type(() => LocationDetailDto)
+  deliveryLocation!: LocationDetailDto;
+
+  @IsEnum(AuctionType)
+  auctionType!: AuctionType;
 
   @IsString()
   @Matches(/^\d+(\.\d{1,2})?$/, {
     message: 'maxPrice must be a decimal string',
   })
   maxPrice!: string;
+
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, {
+    message: 'priceStep must be a decimal string',
+  })
+  priceStep!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  maxBids?: number;
 
   @IsOptional()
   @IsArray()
