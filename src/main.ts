@@ -18,6 +18,7 @@ async function bootstrap() {
   if (configService.getOrThrow<string>('SWAGGER_ENABLED') === 'true') {
     configureOpenApi(app, configService);
   }
+  app.setGlobalPrefix('api/v1/bidding');
   const port = configService.getOrThrow<string>('PORT');
   await app.listen(port);
   logger.log(`bidding service is running on port ${port}`);
