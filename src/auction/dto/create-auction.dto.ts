@@ -14,52 +14,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { AuctionType } from '../../common/enums/auction-type.enum';
-
-export class LocationDetailDto {
-  @IsString()
-  @IsNotEmpty()
-  locationName!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  province!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  address!: string;
-
-  @IsOptional()
-  @IsString()
-  contactName?: string;
-
-  @IsOptional()
-  @IsString()
-  contactPhone?: string;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  earliestTime?: Date;
-
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  latestTime?: Date;
-}
-
-export class VehicleSpecsDto {
-  @IsOptional()
-  @IsNumber()
-  length?: number;
-
-  @IsOptional()
-  @IsNumber()
-  width?: number;
-
-  @IsOptional()
-  @IsNumber()
-  height?: number;
-}
+import { LocationDetailDto } from '../../common/dtos/location.dto';
+import { VehicleSpecsDto } from '../../common/dtos/vehicle.dto';
 
 export class CreateAuctionDto {
   @IsString()

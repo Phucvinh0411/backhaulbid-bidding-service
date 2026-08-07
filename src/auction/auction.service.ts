@@ -7,6 +7,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Auction, AuctionDocument } from './schemas/auction.schema';
+import { AuctionRepository } from './auction.repository';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
@@ -16,8 +17,7 @@ import { calculateParticipationFee } from './fee-policy';
 @Injectable()
 export class AuctionService {
   constructor(
-    @InjectModel(Auction.name)
-    private readonly auctionModel: Model<AuctionDocument>,
+    private readonly auctionRepo: AuctionRepository,
   ) {}
 
   async create(shipperId: string, dto: CreateAuctionDto) {
@@ -36,7 +36,7 @@ export class AuctionService {
     const origin = `${dto.pickupLocation.province} - ${dto.pickupLocation.locationName}`;
     const destination = `${dto.deliveryLocation.province} - ${dto.deliveryLocation.locationName}`;
 
-    const auction = await this.auctionModel.create({
+    const auction = await this.auctionRepo.create({
       shipperId,
       ...dto,
       origin,
@@ -63,13 +63,8 @@ export class AuctionService {
 
     const skip = (query.page - 1) * query.pageSize;
     const [items, totalItems] = await Promise.all([
-      this.auctionModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(query.pageSize)
-        .exec(),
-      this.auctionModel.countDocuments(filter).exec(),
+      this.auctionRepo.find(filter, skip, query.pageSize),
+      this.auctionRepo.count(filter),
     ]);
 
     return {
@@ -145,9 +140,7 @@ export class AuctionService {
       update.depositAmount = depositAmount.toFixed(2);
     }
 
-    const updated = await this.auctionModel
-      .findByIdAndUpdate(auctionId, update, { new: true, runValidators: true })
-      .exec();
+    const updated = await this.auctionRepo.updateById(auctionId, update);
     if (!updated) throw new NotFoundException('Auction not found');
     return this.serialize(updated);
   }
@@ -198,7 +191,7 @@ export class AuctionService {
   private async getAndSynchronizeStatus(
     auctionId: string,
   ): Promise<AuctionDocument> {
-    const auction = await this.auctionModel.findById(auctionId).exec();
+    const auction = await this.auctionRepo.findById(auctionId);
     if (!auction) throw new NotFoundException('Auction not found');
 
     const now = new Date();

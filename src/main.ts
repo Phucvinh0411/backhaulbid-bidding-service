@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { configureOpenApi } from './openapi';
+import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -15,6 +16,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+  app.useGlobalInterceptors(new TransformInterceptor());
   if (configService.getOrThrow<string>('SWAGGER_ENABLED') === 'true') {
     configureOpenApi(app, configService);
   }
