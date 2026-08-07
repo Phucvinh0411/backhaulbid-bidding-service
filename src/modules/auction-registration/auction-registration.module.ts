@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuctionModule } from '../auction/auction.module';
-import { WalletModule } from '../integrations/wallet/wallet.module';
+import { WalletModule } from '../../integrations/wallet/wallet.module';
 import { AuctionRegistrationController } from './auction-registration.controller';
 import { AuctionRegistrationService } from './auction-registration.service';
 import {

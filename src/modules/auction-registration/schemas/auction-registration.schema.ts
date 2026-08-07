@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
-import { DepositStatus } from '../../common/enums/deposit-status.enum';
-import { ParticipationFeeStatus } from '../../common/enums/participation-fee-status.enum';
-import { RegistrationPaymentStatus } from '../../common/enums/registration-payment-status.enum';
-import { RegistrationStatus } from '../../common/enums/registration-status.enum';
+import { DepositStatus } from '../../../common/enums/deposit-status.enum';
+import { ParticipationFeeStatus } from '../../../common/enums/participation-fee-status.enum';
+import { RegistrationPaymentStatus } from '../../../common/enums/registration-payment-status.enum';
+import { RegistrationStatus } from '../../../common/enums/registration-status.enum';
 
 export type AuctionRegistrationDocument = HydratedDocument<AuctionRegistration>;
 

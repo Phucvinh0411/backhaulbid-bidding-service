@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AuctionService } from '../auction/auction.service';
-import { AuctionStatus } from '../common/enums/auction-status.enum';
+import { AuctionStatus } from '../../common/enums/auction-status.enum';
 import { AuctionRegistrationService } from '../auction-registration/auction-registration.service';
 import { ListBidsQueryDto } from './dto/list-bids-query.dto';
 import { PlaceBidDto } from './dto/place-bid.dto';

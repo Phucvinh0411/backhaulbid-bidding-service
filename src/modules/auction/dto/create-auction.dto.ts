@@ -13,9 +13,9 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { AuctionType } from '../../common/enums/auction-type.enum';
-import { LocationDetailDto } from '../../common/dtos/location.dto';
-import { VehicleSpecsDto } from '../../common/dtos/vehicle.dto';
+import { AuctionType } from '../../../common/enums/auction-type.enum';
+import { LocationDetailDto } from '../../../common/dtos/location.dto';
+import { VehicleSpecsDto } from '../../../common/dtos/vehicle.dto';
 
 export class CreateAuctionDto {
   @IsString()

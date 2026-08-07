@@ -24,4 +24,5 @@ export class LocationDetail {
   latestTime?: Date;
 }
 
-export const LocationDetailSchema = SchemaFactory.createForClass(LocationDetail);
+export const LocationDetailSchema =
+  SchemaFactory.createForClass(LocationDetail);

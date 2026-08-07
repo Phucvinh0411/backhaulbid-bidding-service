@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { BEARER_AUTH } from '../openapi';
+import { BEARER_AUTH } from '../../openapi';
 import { AuctionRegistrationService } from './auction-registration.service';
 import { RegisterAuctionDto } from './dto/register-auction.dto';
 import { RetryPaymentDto } from './dto/retry-payment.dto';

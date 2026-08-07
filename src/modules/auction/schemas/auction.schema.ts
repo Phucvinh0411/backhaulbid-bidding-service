@@ -1,11 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
-import { AuctionStatus } from '../../common/enums/auction-status.enum';
-import { AuctionType } from '../../common/enums/auction-type.enum';
+import { AuctionStatus } from '../../../common/enums/auction-status.enum';
+import { AuctionType } from '../../../common/enums/auction-type.enum';
 import { ParticipationFeeTier } from '../fee-policy';
-import { LocationDetail, LocationDetailSchema } from '../../common/schemas/location.schema';
-import { VehicleSpecs, VehicleSpecsSchema } from '../../common/schemas/vehicle.schema';
+import {
+  LocationDetail,
+  LocationDetailSchema,
+} from '../../../common/schemas/location.schema';
+import {
+  VehicleSpecs,
+  VehicleSpecsSchema,
+} from '../../../common/schemas/vehicle.schema';
 
 export type AuctionDocument = HydratedDocument<Auction>;
 

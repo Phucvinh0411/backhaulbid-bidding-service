@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { AuctionStatus } from '../../common/enums/auction-status.enum';
+import { AuctionStatus } from '../../../common/enums/auction-status.enum';
 
 export class ListAuctionsQueryDto {
   @Type(() => Number)

@@ -8,15 +8,15 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AuctionService } from '../auction/auction.service';
-import { AuctionStatus } from '../common/enums/auction-status.enum';
-import { DepositStatus } from '../common/enums/deposit-status.enum';
-import { ParticipationFeeStatus } from '../common/enums/participation-fee-status.enum';
-import { RegistrationPaymentStatus } from '../common/enums/registration-payment-status.enum';
-import { RegistrationStatus } from '../common/enums/registration-status.enum';
+import { AuctionStatus } from '../../common/enums/auction-status.enum';
+import { DepositStatus } from '../../common/enums/deposit-status.enum';
+import { ParticipationFeeStatus } from '../../common/enums/participation-fee-status.enum';
+import { RegistrationPaymentStatus } from '../../common/enums/registration-payment-status.enum';
+import { RegistrationStatus } from '../../common/enums/registration-status.enum';
 import {
   WalletClient,
   WalletClientError,
-} from '../integrations/wallet/wallet.client';
+} from '../../integrations/wallet/wallet.client';
 import { RegisterAuctionDto } from './dto/register-auction.dto';
 import { RetryPaymentDto } from './dto/retry-payment.dto';
 import {

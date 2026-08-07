@@ -3,10 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuctionModule } from './auction/auction.module';
-import { AuctionRegistrationModule } from './auction-registration/auction-registration.module';
-import { BidModule } from './bid/bid.module';
-import { BiddingModule } from './bidding/bidding.module';
+import { AuctionModule } from './modules/auction/auction.module';
+import { AuctionRegistrationModule } from './modules/auction-registration/auction-registration.module';
+import { BidModule } from './modules/bid/bid.module';
+import { BiddingModule } from './modules/bidding/bidding.module';
 
 @Module({
   imports: [

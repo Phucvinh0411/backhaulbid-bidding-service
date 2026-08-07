@@ -11,14 +11,12 @@ import { AuctionRepository } from './auction.repository';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
-import { AuctionStatus } from '../common/enums/auction-status.enum';
+import { AuctionStatus } from '../../common/enums/auction-status.enum';
 import { calculateParticipationFee } from './fee-policy';
 
 @Injectable()
 export class AuctionService {
-  constructor(
-    private readonly auctionRepo: AuctionRepository,
-  ) {}
+  constructor(private readonly auctionRepo: AuctionRepository) {}
 
   async create(shipperId: string, dto: CreateAuctionDto) {
     this.validateSchedule(dto.registrationEndTime, dto.startTime, dto.endTime);
@@ -43,7 +41,9 @@ export class AuctionService {
       destination,
       maxPrice: Types.Decimal128.fromString(maxPrice.toFixed(2)),
       priceStep: Types.Decimal128.fromString(priceStep.toFixed(2)),
-      goodsValue: dto.goodsValue ? Types.Decimal128.fromString(Number(dto.goodsValue).toFixed(2)) : undefined,
+      goodsValue: dto.goodsValue
+        ? Types.Decimal128.fromString(Number(dto.goodsValue).toFixed(2))
+        : undefined,
       depositAmount:
         depositAmount === null
           ? null
@@ -96,16 +96,18 @@ export class AuctionService {
     this.validateSchedule(nextRegistrationEnd, nextStart, nextEnd);
 
     const update: Record<string, unknown> = { ...dto };
-    
+
     if (dto.pickupLocation) {
       update.origin = `${dto.pickupLocation.province} - ${dto.pickupLocation.locationName}`;
     }
     if (dto.deliveryLocation) {
       update.destination = `${dto.deliveryLocation.province} - ${dto.deliveryLocation.locationName}`;
     }
-    
+
     if (dto.priceStep !== undefined) {
-      update.priceStep = this.parseAmount(dto.priceStep, 'priceStep').toFixed(2);
+      update.priceStep = this.parseAmount(dto.priceStep, 'priceStep').toFixed(
+        2,
+      );
     }
     if (dto.goodsValue !== undefined) {
       update.goodsValue = Number(dto.goodsValue).toFixed(2);

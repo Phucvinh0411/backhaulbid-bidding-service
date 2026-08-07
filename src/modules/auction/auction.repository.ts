@@ -19,7 +19,11 @@ export class AuctionRepository {
     return this.model.findById(id).exec();
   }
 
-  async find(filter: Record<string, any>, skip = 0, limit = 10): Promise<AuctionDocument[]> {
+  async find(
+    filter: Record<string, any>,
+    skip = 0,
+    limit = 10,
+  ): Promise<AuctionDocument[]> {
     return this.model
       .find(filter)
       .sort({ createdAt: -1 })
