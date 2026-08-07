@@ -39,19 +39,17 @@
     ```
 
 3.  **Cấu hình biến môi trường (`.env`):**
-    Tạo file `.env` tại thư mục gốc:
-    ```env
-    PORT=3000
-    MONGO_URI=mongodb://backhaulbid:backhaulbid_secret@localhost:27017/backhaulbid_bidding?authSource=admin
-    REDIS_URL=redis://:backhaulbid_secret@localhost:6379
-    RABBITMQ_URL=amqp://backhaulbid:backhaulbid_secret@localhost:5672
+    ```powershell
+    Copy-Item .env.example .env
     ```
+    Sau đó thay các giá trị `change-me-*`. `.env` không được commit; chỉ commit
+    `.env.example`.
 
 4.  **Khởi chạy chế độ phát triển (Development):**
     ```bash
     npm run start:dev
     ```
-    *Dịch vụ sẽ được khởi chạy tại cổng **`3000`**. Sockets Gateway lắng nghe kết nối tại `ws://localhost:3000`*
+    *Dịch vụ sẽ được khởi chạy tại cổng **`3001`**. Sockets Gateway lắng nghe kết nối tại `ws://localhost:3001`*
 
 5.  **Biên dịch dự án (Build Production):**
     ```bash
@@ -96,14 +94,11 @@ Build Docker Image:
 docker build -t backhaulbid-bidding-service:latest .
 ```
 
-Khởi chạy container:
+Khi chạy độc lập bằng Docker, `MONGO_URI`, `REDIS_URL`, `RABBITMQ_URL` và
+`WALLET_SERVICE_URL` phải dùng hostname mà container có thể truy cập. Trong
+stack BackHaulBid, nên khởi chạy từ `backhaulbid-infrastructure` để Compose
+truyền đúng các URL nội bộ:
 ```bash
-docker run -d \
-  -p 3000:3000 \
-  --name bidding-service \
-  --network backhaulbid-network \
-  -e MONGO_URI=mongodb://backhaulbid:backhaulbid_secret@mongodb:27017/backhaulbid_bidding \
-  -e REDIS_URL=redis://:backhaulbid_secret@redis:6379 \
-  -e RABBITMQ_URL=amqp://backhaulbid:backhaulbid_secret@rabbitmq:5672 \
-  backhaulbid-bidding-service:latest
+cd ../backhaulbid-infrastructure
+docker compose up -d --build bidding-service
 ```

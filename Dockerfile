@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm install
 
 # Copy source files
 COPY . .
@@ -20,6 +20,6 @@ RUN npm run build
 # Prune devDependencies to keep the runtime small
 RUN npm prune --production
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "dist/main.js"]
