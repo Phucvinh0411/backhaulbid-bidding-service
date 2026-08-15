@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Auction, AuctionDocument } from './schemas/auction.schema';
+import { AuctionDocument } from './schemas/auction.schema';
 import { AuctionRepository } from './auction.repository';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
@@ -102,8 +102,7 @@ export class AuctionService {
       throw new ConflictException('Only pending auctions can be updated');
     }
 
-    const nextRegistrationStart =
-      auction.registrationStartTime ?? new Date();
+    const nextRegistrationStart = auction.registrationStartTime ?? new Date();
     const nextRegistrationEnd =
       dto.registrationEndTime ?? auction.registrationEndTime;
     const nextStart = dto.startTime ?? auction.startTime;
@@ -372,4 +371,3 @@ export class AuctionService {
     };
   }
 }
-

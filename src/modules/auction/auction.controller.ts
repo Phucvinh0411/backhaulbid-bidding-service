@@ -58,10 +58,7 @@ export class AuctionController {
   }
 
   @Post(':auctionId/fraud-flag')
-  flag(
-    @Param('auctionId') auctionId: string,
-    @Body() dto: FlagAuctionDto,
-  ) {
+  flag(@Param('auctionId') auctionId: string, @Body() dto: FlagAuctionDto) {
     return this.auctionService.flag(auctionId, dto);
   }
 

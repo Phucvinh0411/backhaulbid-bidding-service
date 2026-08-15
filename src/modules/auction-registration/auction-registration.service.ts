@@ -237,10 +237,7 @@ export class AuctionRegistrationService {
     return this.serialize(registration, auction);
   }
 
-  async releaseLoserDeposits(
-    auctionId: string,
-    winningCarrierId?: string,
-  ) {
+  async releaseLoserDeposits(auctionId: string, winningCarrierId?: string) {
     const filter: Record<string, any> = {
       auctionId,
       depositStatus: DepositStatus.LOCKED,
