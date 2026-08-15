@@ -39,6 +39,17 @@ export class BidService {
       );
     }
 
+    if (auction.maxBids != null) {
+      const totalBids = await this.bidModel
+        .countDocuments({ auctionId })
+        .exec();
+      if (totalBids >= Number(auction.maxBids)) {
+        throw new ConflictException(
+          'Auction has reached the maximum number of bids',
+        );
+      }
+    }
+
     const currentLowest = await this.bidModel
       .findOne({ auctionId })
       .sort({ bidAmount: 1, bidTime: 1 })
@@ -47,6 +58,15 @@ export class BidService {
       throw new ConflictException(
         'Bid must be lower than the current lowest bid',
       );
+    }
+    if (currentLowest && auction.priceStep != null) {
+      const step = Number(auction.priceStep);
+      const lowest = Number(currentLowest.bidAmount.toString());
+      if (Number.isFinite(step) && step > 0 && amount > lowest - step) {
+        throw new ConflictException(
+          'Bid must improve the current lowest bid by at least the price step',
+        );
+      }
     }
 
     const bid = await this.bidModel.create({

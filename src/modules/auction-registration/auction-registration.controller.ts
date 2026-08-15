@@ -73,4 +73,15 @@ export class AuctionRegistrationController {
       carrierId,
     );
   }
+
+  @Post('release-loser-deposits')
+  releaseLoserDeposits(
+    @Param('auctionId') auctionId: string,
+    @Body('winningCarrierId') winningCarrierId?: string,
+  ) {
+    return this.registrationService.releaseLoserDeposits(
+      auctionId,
+      winningCarrierId,
+    );
+  }
 }

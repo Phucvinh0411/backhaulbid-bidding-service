@@ -6,20 +6,32 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Auction, AuctionDocument } from './schemas/auction.schema';
+import { AuctionDocument } from './schemas/auction.schema';
 import { AuctionRepository } from './auction.repository';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
+import { FlagAuctionDto } from './dto/flag-auction.dto';
 import { AuctionStatus } from '../../common/enums/auction-status.enum';
 import { calculateParticipationFee } from './fee-policy';
+import { Bid, BidDocument } from '../bid/schemas/bid.schema';
 
 @Injectable()
 export class AuctionService {
-  constructor(private readonly auctionRepo: AuctionRepository) {}
+  constructor(
+    private readonly auctionRepo: AuctionRepository,
+    @InjectModel(Bid.name)
+    private readonly bidModel: Model<BidDocument>,
+  ) {}
 
   async create(shipperId: string, dto: CreateAuctionDto) {
-    this.validateSchedule(dto.registrationEndTime, dto.startTime, dto.endTime);
+    const registrationStartTime = dto.registrationStartTime ?? new Date();
+    this.validateSchedule(
+      registrationStartTime,
+      dto.registrationEndTime,
+      dto.startTime,
+      dto.endTime,
+    );
     const maxPrice = this.parseAmount(dto.maxPrice, 'maxPrice');
     const priceStep = this.parseAmount(dto.priceStep, 'priceStep');
     const fee = calculateParticipationFee(maxPrice);
@@ -39,6 +51,7 @@ export class AuctionService {
       ...dto,
       origin,
       destination,
+      registrationStartTime,
       maxPrice: Types.Decimal128.fromString(maxPrice.toFixed(2)),
       priceStep: Types.Decimal128.fromString(priceStep.toFixed(2)),
       goodsValue: dto.goodsValue
@@ -89,11 +102,17 @@ export class AuctionService {
       throw new ConflictException('Only pending auctions can be updated');
     }
 
+    const nextRegistrationStart = auction.registrationStartTime ?? new Date();
     const nextRegistrationEnd =
       dto.registrationEndTime ?? auction.registrationEndTime;
     const nextStart = dto.startTime ?? auction.startTime;
     const nextEnd = dto.endTime ?? auction.endTime;
-    this.validateSchedule(nextRegistrationEnd, nextStart, nextEnd);
+    this.validateSchedule(
+      nextRegistrationStart,
+      nextRegistrationEnd,
+      nextStart,
+      nextEnd,
+    );
 
     const update: Record<string, unknown> = { ...dto };
 
@@ -186,6 +205,20 @@ export class AuctionService {
       throw new ConflictException('Auction has not reached its end time');
     }
     auction.status = AuctionStatus.COMPLETED;
+    const winningBid = await this.bidModel
+      .findOne({ auctionId: auction._id })
+      .sort({ bidAmount: 1, bidTime: 1 })
+      .exec();
+    auction.winningBidId = winningBid?._id ?? null;
+    await auction.save();
+    return this.serialize(auction);
+  }
+
+  async flag(auctionId: string, dto: FlagAuctionDto) {
+    const auction = await this.auctionRepo.findById(auctionId);
+    if (!auction) throw new NotFoundException('Auction not found');
+    auction.fraudFlag = true;
+    auction.fraudReason = dto.reason.trim();
     await auction.save();
     return this.serialize(auction);
   }
@@ -205,27 +238,50 @@ export class AuctionService {
       auction.status = AuctionStatus.OPEN;
       await auction.save();
     } else if (
+      auction.status === AuctionStatus.PENDING &&
+      now >= auction.endTime
+    ) {
+      auction.status = AuctionStatus.COMPLETED;
+      const winningBid = await this.bidModel
+        .findOne({ auctionId: auction._id })
+        .sort({ bidAmount: 1, bidTime: 1 })
+        .exec();
+      auction.winningBidId = winningBid?._id ?? null;
+      await auction.save();
+    } else if (
       auction.status === AuctionStatus.OPEN &&
       now >= auction.endTime
     ) {
       auction.status = AuctionStatus.COMPLETED;
+      const winningBid = await this.bidModel
+        .findOne({ auctionId: auction._id })
+        .sort({ bidAmount: 1, bidTime: 1 })
+        .exec();
+      auction.winningBidId = winningBid?._id ?? null;
       await auction.save();
     }
     return auction;
   }
 
   private validateSchedule(
+    registrationStartTime: Date,
     registrationEndTime: Date,
     startTime: Date,
     endTime: Date,
   ) {
     const now = new Date();
     if (
+      !(registrationStartTime instanceof Date) ||
       !(registrationEndTime instanceof Date) ||
       !(startTime instanceof Date) ||
       !(endTime instanceof Date)
     ) {
       throw new BadRequestException('Auction times must be valid dates');
+    }
+    if (registrationStartTime > registrationEndTime) {
+      throw new BadRequestException(
+        'registrationStartTime must be before registrationEndTime',
+      );
     }
     if (registrationEndTime <= now) {
       throw new BadRequestException(
@@ -255,25 +311,47 @@ export class AuctionService {
       title: auction.title,
       goodsType: auction.goodsType,
       weight: auction.weight,
-      volume: auction.volume,
-      goodsValue: auction.goodsValue?.toString(),
+      volume: auction.volume ?? null,
+      goodsValue: auction.goodsValue?.toString() ?? null,
       vehicleTypeRequired: auction.vehicleTypeRequired,
-      requiredTemp: auction.requiredTemp,
-      vehicleSpecs: auction.vehicleSpecs,
+      requiredTemp: auction.requiredTemp ?? null,
+      vehicleSpecs: auction.vehicleSpecs ?? null,
+      requiredVehicleDims: auction.vehicleSpecs
+        ? {
+            length: auction.vehicleSpecs.length,
+            width: auction.vehicleSpecs.width,
+            height: auction.vehicleSpecs.height,
+          }
+        : null,
       origin: auction.origin,
       destination: auction.destination,
       pickupLocation: auction.pickupLocation,
       deliveryLocation: auction.deliveryLocation,
+      originLocationName: auction.pickupLocation?.locationName ?? null,
+      originAddress: auction.pickupLocation?.address ?? null,
+      originProvince: auction.pickupLocation?.province ?? null,
+      originContactName: auction.pickupLocation?.contactName ?? null,
+      originContactPhone: auction.pickupLocation?.contactPhone ?? null,
+      destinationLocationName: auction.deliveryLocation?.locationName ?? null,
+      destinationAddress: auction.deliveryLocation?.address ?? null,
+      destinationProvince: auction.deliveryLocation?.province ?? null,
+      destinationContactName: auction.deliveryLocation?.contactName ?? null,
+      destinationContactPhone: auction.deliveryLocation?.contactPhone ?? null,
+      earliestPickup: auction.pickupLocation?.earliestTime ?? null,
+      latestPickup: auction.pickupLocation?.latestTime ?? null,
+      earliestDelivery: auction.deliveryLocation?.earliestTime ?? null,
+      latestDelivery: auction.deliveryLocation?.latestTime ?? null,
       auctionType: auction.auctionType,
       maxPrice: auction.maxPrice.toString(),
-      priceStep: auction.priceStep.toString(),
-      maxBids: auction.maxBids,
+      priceStep: auction.priceStep ? auction.priceStep.toString() : null,
+      maxBids: auction.maxBids ?? null,
       images: auction.images,
       notes: auction.notes,
       isDepositRequired: auction.isDepositRequired,
       depositAmount: auction.depositAmount?.toString() ?? null,
       participationFeeTier: auction.participationFeeTier,
       participationFeeAmount: auction.participationFeeAmount.toString(),
+      registrationStartTime: auction.registrationStartTime ?? null,
       registrationEndTime: auction.registrationEndTime,
       startTime: auction.startTime,
       endTime: auction.endTime,
@@ -285,7 +363,9 @@ export class AuctionService {
         auction.status === AuctionStatus.OPEN &&
         now >= auction.startTime &&
         now < auction.endTime,
-      winningBidId: auction.winningBidId,
+      winningBidId: auction.winningBidId ?? null,
+      fraudFlag: auction.fraudFlag ?? false,
+      fraudReason: auction.fraudReason ?? null,
       createdAt: auction.createdAt,
       updatedAt: auction.updatedAt,
     };

@@ -14,6 +14,7 @@ import { AuctionService } from './auction.service';
 import { CreateAuctionDto } from './dto/create-auction.dto';
 import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
+import { FlagAuctionDto } from './dto/flag-auction.dto';
 import { Query } from '@nestjs/common';
 
 @Controller('auctions')
@@ -54,6 +55,11 @@ export class AuctionController {
   @Post(':auctionId/cancel')
   cancel(@Param('auctionId') auctionId: string) {
     return this.auctionService.cancel(auctionId);
+  }
+
+  @Post(':auctionId/fraud-flag')
+  flag(@Param('auctionId') auctionId: string, @Body() dto: FlagAuctionDto) {
+    return this.auctionService.flag(auctionId, dto);
   }
 
   @Post(':auctionId/complete')

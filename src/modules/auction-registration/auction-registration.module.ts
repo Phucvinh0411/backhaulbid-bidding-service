@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuctionModule } from '../auction/auction.module';
 import { WalletModule } from '../../integrations/wallet/wallet.module';
 import { AuctionRegistrationController } from './auction-registration.controller';
+import { MyRegistrationsController } from './my-registrations.controller';
 import { AuctionRegistrationService } from './auction-registration.service';
 import {
   AuctionRegistration,
@@ -17,7 +18,7 @@ import {
       { name: AuctionRegistration.name, schema: AuctionRegistrationSchema },
     ]),
   ],
-  controllers: [AuctionRegistrationController],
+  controllers: [AuctionRegistrationController, MyRegistrationsController],
   providers: [AuctionRegistrationService],
   exports: [AuctionRegistrationService],
 })
