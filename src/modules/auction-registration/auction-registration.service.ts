@@ -19,6 +19,7 @@ import {
 } from '../../integrations/wallet/wallet.client';
 import { RegisterAuctionDto } from './dto/register-auction.dto';
 import { RetryPaymentDto } from './dto/retry-payment.dto';
+import { ListMyRegistrationsQueryDto } from './dto/list-my-registrations-query.dto';
 import {
   AuctionRegistration,
   AuctionRegistrationDocument,
@@ -174,6 +175,43 @@ export class AuctionRegistrationService {
     };
   }
 
+  async listMine(carrierId: string, query: ListMyRegistrationsQueryDto) {
+    const skip = (query.page - 1) * query.pageSize;
+    const [registrations, totalItems] = await Promise.all([
+      this.registrationModel
+        .find({ carrierId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(query.pageSize)
+        .exec(),
+      this.registrationModel.countDocuments({ carrierId }).exec(),
+    ]);
+
+    const data = await Promise.all(
+      registrations.map(async (registration) => {
+        const auction = await this.auctionService.findById(
+          registration.auctionId,
+        );
+        const access = await this.getAccess(registration.auctionId, carrierId);
+        return {
+          registration: this.serialize(registration, auction),
+          auction,
+          access,
+        };
+      }),
+    );
+
+    return {
+      data,
+      pagination: {
+        page: query.page,
+        pageSize: query.pageSize,
+        totalItems,
+        totalPages: Math.ceil(totalItems / query.pageSize),
+      },
+    };
+  }
+
   async cancel(auctionId: string, registrationId: string, carrierId: string) {
     const auction = await this.auctionService.findById(auctionId);
     const registration = await this.registrationModel
@@ -197,6 +235,44 @@ export class AuctionRegistrationService {
     registration.status = RegistrationStatus.CANCELLED;
     await registration.save();
     return this.serialize(registration, auction);
+  }
+
+  async releaseLoserDeposits(
+    auctionId: string,
+    winningCarrierId?: string,
+  ) {
+    const filter: Record<string, any> = {
+      auctionId,
+      depositStatus: DepositStatus.LOCKED,
+    };
+    if (winningCarrierId) {
+      filter.carrierId = { $ne: winningCarrierId };
+    }
+
+    const registrations = await this.registrationModel.find(filter).exec();
+    let releasedCount = 0;
+
+    for (const reg of registrations) {
+      if (reg.depositHoldId) {
+        try {
+          await this.walletClient.release(
+            reg.depositHoldId,
+            `${reg._id}:deposit:refund:loser`,
+          );
+          reg.depositStatus = DepositStatus.REFUNDED;
+          await reg.save();
+          releasedCount++;
+        } catch {
+          // Bỏ qua lỗi hold riêng lẻ để tiếp tục hoàn cho các bên khác
+        }
+      }
+    }
+
+    return {
+      auctionId,
+      releasedCount,
+      totalEligible: registrations.length,
+    };
   }
 
   private async completePayment(

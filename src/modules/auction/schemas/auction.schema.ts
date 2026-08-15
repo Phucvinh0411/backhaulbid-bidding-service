@@ -90,6 +90,9 @@ export class Auction {
   @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
   participationFeeAmount!: Types.Decimal128;
 
+  @Prop({ type: Date, default: null })
+  registrationStartTime!: Date | null;
+
   @Prop({ type: Date, required: true })
   registrationEndTime!: Date;
 
@@ -109,6 +112,12 @@ export class Auction {
 
   @Prop({ type: String, default: null })
   winningBidId!: string | null;
+
+  @Prop({ type: Boolean, default: false })
+  fraudFlag!: boolean;
+
+  @Prop({ type: String, default: null, trim: true })
+  fraudReason!: string | null;
 
   createdAt!: Date;
   updatedAt!: Date;

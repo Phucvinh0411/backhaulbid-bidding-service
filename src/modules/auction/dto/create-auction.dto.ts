@@ -105,6 +105,11 @@ export class CreateAuctionDto {
   })
   depositAmount?: string;
 
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  registrationStartTime?: Date;
+
   @Type(() => Date)
   @IsDate()
   registrationEndTime!: Date;

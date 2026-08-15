@@ -5,9 +5,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Auction, AuctionSchema } from './schemas/auction.schema';
 import { AuctionRepository } from './auction.repository';
 
+import { Bid, BidSchema } from '../bid/schemas/bid.schema';
+
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Auction.name, schema: AuctionSchema }]),
+    MongooseModule.forFeature([
+      { name: Auction.name, schema: AuctionSchema },
+      { name: Bid.name, schema: BidSchema },
+    ]),
   ],
   controllers: [AuctionController],
   providers: [AuctionRepository, AuctionService],
