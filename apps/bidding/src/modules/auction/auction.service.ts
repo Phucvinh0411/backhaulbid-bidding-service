@@ -83,10 +83,10 @@ export class AuctionService {
     });
 
     const serializedAuction = this.serialize(auction);
-    
+
     // Phát sự kiện để báo cho BiddingGateway thực hiện so khớp (matching) xe rỗng
     GlobalEventBus.emit('auction_created', serializedAuction);
-    
+
     return serializedAuction;
   }
 
@@ -159,7 +159,7 @@ export class AuctionService {
       update.maxPrice = maxPrice.toFixed(2);
       update.participationFeeTier = fee.tier;
       update.participationFeeAmount = fee.amount;
-      
+
       const creationFee = calculateCreationFee(maxPrice);
       update.creationFeeTier = creationFee.tier;
       update.creationFeeAmount = creationFee.amount;
@@ -378,7 +378,9 @@ export class AuctionService {
       participationFeeTier: auction.participationFeeTier,
       participationFeeAmount: auction.participationFeeAmount.toString(),
       creationFeeTier: auction.creationFeeTier || null,
-      creationFeeAmount: auction.creationFeeAmount ? auction.creationFeeAmount.toString() : null,
+      creationFeeAmount: auction.creationFeeAmount
+        ? auction.creationFeeAmount.toString()
+        : null,
       registrationStartTime: auction.registrationStartTime ?? null,
       registrationEndTime: auction.registrationEndTime,
       startTime: auction.startTime,

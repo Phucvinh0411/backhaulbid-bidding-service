@@ -28,11 +28,13 @@ export class NotificationService {
       isRead: false,
     });
     const saved = await notification.save();
-    this.logger.log(`Notification created for user ${dto.userId}: ${dto.title}`);
-    
+    this.logger.log(
+      `Notification created for user ${dto.userId}: ${dto.title}`,
+    );
+
     // Broadcast via WebSocket
     this.notificationGateway.notifyUser(dto.userId, saved);
-    
+
     return saved;
   }
 

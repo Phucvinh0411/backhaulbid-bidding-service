@@ -59,7 +59,10 @@ export class BiddingService {
   /**
    * Chấp nhận 1 báo giá và tự động từ chối tất cả báo giá còn lại thuộc cùng đơn hàng bằng DB Transaction
    */
-  async acceptBid(orderId: string, acceptedBidId: string): Promise<{ success: boolean; message: string }> {
+  async acceptBid(
+    orderId: string,
+    acceptedBidId: string,
+  ): Promise<{ success: boolean; message: string }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -81,7 +84,11 @@ export class BiddingService {
       }
 
       // 2. Cập nhật status = ACCEPTED cho báo giá được chọn
-      await queryRunner.manager.update(Bid, { id: acceptedBidId }, { status: BidStatus.ACCEPTED });
+      await queryRunner.manager.update(
+        Bid,
+        { id: acceptedBidId },
+        { status: BidStatus.ACCEPTED },
+      );
 
       // 3. Cập nhật status = REJECTED cho tất cả các báo giá còn lại thuộc cùng orderId
       await queryRunner.manager.update(
@@ -101,7 +108,10 @@ export class BiddingService {
       // Rollback toàn bộ thao tác nếu xảy ra lỗi bất kỳ
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException(

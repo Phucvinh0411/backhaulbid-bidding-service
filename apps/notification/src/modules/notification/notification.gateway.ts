@@ -17,7 +17,9 @@ import { NotificationDocument } from './schemas/notification.schema.js';
   },
   path: '/notification-socket',
 })
-export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -44,17 +46,20 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   @SubscribeMessage('identify')
-  handleIdentify(@MessageBody() data: { userId: string }, @ConnectedSocket() client: Socket) {
+  handleIdentify(
+    @MessageBody() data: { userId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
     if (data && data.userId) {
       this.logger.log(`Socket ${client.id} identified as user ${data.userId}`);
       if (!this.userSockets.has(data.userId)) {
         this.userSockets.set(data.userId, new Set());
       }
       this.userSockets.get(data.userId)?.add(client.id);
-      
+
       // Also join a room for this user for easy broadcasting
       client.join(data.userId);
-      
+
       return { status: 'success', message: 'Identified successfully' };
     }
     return { status: 'error', message: 'Missing userId' };

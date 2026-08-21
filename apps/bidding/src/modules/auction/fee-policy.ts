@@ -63,7 +63,7 @@ export function calculateCreationFee(maxPrice: number): CreationFeeQuote {
   if (maxPrice < 10_000_000) {
     return { tier: CreationFeeTier.LEVEL_1, amount: '50000' };
   }
-  
+
   if (maxPrice < 50_000_000) {
     return { tier: CreationFeeTier.LEVEL_2, amount: '100000' };
   }

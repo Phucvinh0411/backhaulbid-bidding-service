@@ -19,9 +19,7 @@ export class NotificationController {
    * GET /api/v1/notifications/mine
    */
   @Get('mine')
-  async getMyNotifications(
-    @Headers('x-user-id') userId?: string,
-  ) {
+  async getMyNotifications(@Headers('x-user-id') userId?: string) {
     const effectiveUserId = userId ?? 'DEMO-USER';
     return this.notificationService.findByUserId(effectiveUserId);
   }
@@ -31,9 +29,7 @@ export class NotificationController {
    * GET /api/v1/notifications/unread-count
    */
   @Get('unread-count')
-  async getUnreadCount(
-    @Headers('x-user-id') userId?: string,
-  ) {
+  async getUnreadCount(@Headers('x-user-id') userId?: string) {
     const effectiveUserId = userId ?? 'DEMO-USER';
     const count = await this.notificationService.countUnread(effectiveUserId);
     return { count };
@@ -45,11 +41,10 @@ export class NotificationController {
    */
   @Post('mark-all-read')
   @HttpCode(HttpStatus.OK)
-  async markAllRead(
-    @Headers('x-user-id') userId?: string,
-  ) {
+  async markAllRead(@Headers('x-user-id') userId?: string) {
     const effectiveUserId = userId ?? 'DEMO-USER';
-    const modified = await this.notificationService.markAllAsRead(effectiveUserId);
+    const modified =
+      await this.notificationService.markAllAsRead(effectiveUserId);
     return { modified };
   }
 

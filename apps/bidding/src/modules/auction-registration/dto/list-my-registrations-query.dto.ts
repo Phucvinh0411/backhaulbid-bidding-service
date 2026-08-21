@@ -5,7 +5,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export enum RegistrationStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
 }
 
 export class ListMyRegistrationsQueryDto {

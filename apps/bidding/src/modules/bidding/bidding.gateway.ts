@@ -96,29 +96,36 @@ export class BiddingGateway implements OnModuleInit {
   }
 
   onModuleInit() {
-    GlobalEventBus.on('auction_created', async (auction) => {
-      try {
-        const fleetServiceUrl = process.env.FLEET_SERVICE_URL || 'http://backhaulbid-fleet-service:8080';
-        const response = await fetch(`${fleetServiceUrl}/internal/empty-routes/match`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            origin: auction.origin, 
-            destination: auction.destination,
-            weight: auction.weight,
-            latestPickup: auction.pickupLocation?.latestTime,
-            vehicleTypeRequired: auction.vehicleTypeRequired
-          })
-        });
-        if (response.ok) {
-          const matches = await response.json();
-          if (matches && matches.length > 0) {
-            this.notifyMatchedCarriers(matches, auction);
+    GlobalEventBus.on('auction_created', (auction) => {
+      void (async () => {
+        try {
+          const fleetServiceUrl =
+            process.env.FLEET_SERVICE_URL ||
+            'http://backhaulbid-fleet-service:8080';
+          const response = await fetch(
+            `${fleetServiceUrl}/internal/empty-routes/match`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                origin: auction.origin,
+                destination: auction.destination,
+                weight: auction.weight,
+                latestPickup: auction.pickupLocation?.latestTime,
+                vehicleTypeRequired: auction.vehicleTypeRequired,
+              }),
+            },
+          );
+          if (response.ok) {
+            const matches = await response.json();
+            if (matches && matches.length > 0) {
+              this.notifyMatchedCarriers(matches, auction);
+            }
           }
+        } catch (error) {
+          console.error('Failed to match empty routes:', error);
         }
-      } catch (error) {
-        console.error('Failed to match empty routes:', error);
-      }
+      })();
     });
   }
 }
