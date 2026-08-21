@@ -84,15 +84,38 @@ export class BiddingGateway implements OnModuleInit {
   }
 
   public notifyMatchedCarriers(matches: any[], auctionData: any) {
-    matches.forEach((match) => {
-      this.server.to(`company:${match.companyId}`).emit('new_matching_order', {
-        message: 'Có một lộ trình mới phù hợp với xe rỗng của bạn!',
-        routeId: match.id,
-        truckId: match.truckId,
-        orderId: auctionData.id || auctionData._id || 'UNKNOWN',
-        auction: auctionData,
-      });
-    });
+    for (const match of matches) {
+      void (async () => {
+        // 1. Emit direct socket for those who might listen to bidding-socket (optional backward compatibility)
+        this.server.to(`company:${match.companyId}`).emit('new_matching_order', {
+          message: 'Có một lộ trình mới phù hợp với xe rỗng của bạn!',
+          routeId: match.id,
+          truckId: match.truckId,
+          orderId: auctionData.id || auctionData._id || 'UNKNOWN',
+          auction: auctionData,
+        });
+
+        // 2. Call Notification Service to store and broadcast to NotificationSocket
+        try {
+          const notificationServiceUrl =
+            process.env.NOTIFICATION_SERVICE_URL ||
+            'http://backhaulbid-notification-service:3002';
+          await fetch(`${notificationServiceUrl}/api/v1/notifications/internal/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: match.companyId, // Use companyId so the Carrier UI (using effectiveId) receives it
+              title: auctionData.title || auctionData.goodsName || 'Lô hàng mới',
+              message: 'Hệ thống vừa tìm thấy 1 lộ trình phù hợp với xe rỗng của bạn!',
+              referenceId: auctionData.id || auctionData._id || 'UNKNOWN',
+              type: 'NEW_AUCTION'
+            })
+          });
+        } catch (err) {
+          console.error('Failed to create internal notification', err);
+        }
+      })();
+    }
   }
 
   onModuleInit() {
