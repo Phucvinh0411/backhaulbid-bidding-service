@@ -7,12 +7,15 @@ import { AuctionRepository } from './auction.repository';
 
 import { Bid, BidSchema } from '../bid/schemas/bid.schema';
 
+import { WalletModule } from '../../integrations/wallet/wallet.module';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Auction.name, schema: AuctionSchema },
       { name: Bid.name, schema: BidSchema },
     ]),
+    WalletModule,
   ],
   controllers: [AuctionController],
   providers: [AuctionRepository, AuctionService],

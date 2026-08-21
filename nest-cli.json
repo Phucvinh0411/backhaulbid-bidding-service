@@ -1,8 +1,30 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "monorepo": true,
+  "root": "apps/bidding",
   "compilerOptions": {
-    "deleteOutDir": true
+    "webpack": false,
+    "tsConfigPath": "apps/bidding/tsconfig.app.json"
+  },
+  "projects": {
+    "bidding": {
+      "type": "application",
+      "root": "apps/bidding",
+      "entryFile": "main",
+      "sourceRoot": "apps/bidding/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/bidding/tsconfig.app.json"
+      }
+    },
+    "notification": {
+      "type": "application",
+      "root": "apps/notification",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification/tsconfig.app.json"
+      }
+    }
   }
 }

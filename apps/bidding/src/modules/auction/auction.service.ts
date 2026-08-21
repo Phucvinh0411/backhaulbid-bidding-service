@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AuctionDocument } from './schemas/auction.schema';
@@ -13,8 +14,10 @@ import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
 import { FlagAuctionDto } from './dto/flag-auction.dto';
 import { AuctionStatus } from '../../common/enums/auction-status.enum';
-import { calculateParticipationFee } from './fee-policy';
+import { calculateParticipationFee, calculateCreationFee } from './fee-policy';
+import { WalletClient } from '../../integrations/wallet/wallet.client';
 import { Bid, BidDocument } from '../bid/schemas/bid.schema';
+import { GlobalEventBus } from '../../common/events';
 
 @Injectable()
 export class AuctionService {
@@ -22,6 +25,7 @@ export class AuctionService {
     private readonly auctionRepo: AuctionRepository,
     @InjectModel(Bid.name)
     private readonly bidModel: Model<BidDocument>,
+    private readonly walletClient: WalletClient,
   ) {}
 
   async create(shipperId: string, dto: CreateAuctionDto) {
@@ -35,6 +39,7 @@ export class AuctionService {
     const maxPrice = this.parseAmount(dto.maxPrice, 'maxPrice');
     const priceStep = this.parseAmount(dto.priceStep, 'priceStep');
     const fee = calculateParticipationFee(maxPrice);
+    const creationFee = calculateCreationFee(maxPrice);
     const depositAmount = dto.isDepositRequired
       ? this.parseAmount(dto.depositAmount, 'depositAmount')
       : null;
@@ -46,7 +51,17 @@ export class AuctionService {
     const origin = `${dto.pickupLocation.province} - ${dto.pickupLocation.locationName}`;
     const destination = `${dto.deliveryLocation.province} - ${dto.deliveryLocation.locationName}`;
 
+    const auctionId = randomUUID();
+
+    await this.walletClient.charge(shipperId, {
+      auctionId,
+      amount: creationFee.amount,
+      purpose: 'AUCTION_CREATION_FEE',
+      idempotencyKey: `auction_creation_fee_${auctionId}`,
+    });
+
     const auction = await this.auctionRepo.create({
+      _id: auctionId,
       shipperId,
       ...dto,
       origin,
@@ -61,12 +76,18 @@ export class AuctionService {
         depositAmount === null
           ? null
           : Types.Decimal128.fromString(depositAmount.toFixed(2)),
-      participationFeeTier: fee.tier,
       participationFeeAmount: Types.Decimal128.fromString(fee.amount),
+      creationFeeTier: creationFee.tier,
+      creationFeeAmount: Types.Decimal128.fromString(creationFee.amount),
       status: AuctionStatus.PENDING,
     });
 
-    return this.serialize(auction);
+    const serializedAuction = this.serialize(auction);
+
+    // Phát sự kiện để báo cho BiddingGateway thực hiện so khớp (matching) xe rỗng
+    GlobalEventBus.emit('auction_created', serializedAuction);
+
+    return serializedAuction;
   }
 
   async list(query: ListAuctionsQueryDto) {
@@ -138,6 +159,11 @@ export class AuctionService {
       update.maxPrice = maxPrice.toFixed(2);
       update.participationFeeTier = fee.tier;
       update.participationFeeAmount = fee.amount;
+
+      const creationFee = calculateCreationFee(maxPrice);
+      update.creationFeeTier = creationFee.tier;
+      update.creationFeeAmount = creationFee.amount;
+
       if (dto.isDepositRequired === undefined && auction.isDepositRequired) {
         update.depositAmount = auction.depositAmount?.toString() ?? null;
       }
@@ -351,6 +377,10 @@ export class AuctionService {
       depositAmount: auction.depositAmount?.toString() ?? null,
       participationFeeTier: auction.participationFeeTier,
       participationFeeAmount: auction.participationFeeAmount.toString(),
+      creationFeeTier: auction.creationFeeTier || null,
+      creationFeeAmount: auction.creationFeeAmount
+        ? auction.creationFeeAmount.toString()
+        : null,
       registrationStartTime: auction.registrationStartTime ?? null,
       registrationEndTime: auction.registrationEndTime,
       startTime: auction.startTime,

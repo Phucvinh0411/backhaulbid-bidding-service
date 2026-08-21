@@ -16,6 +16,7 @@ import {
 import { AuctionType } from '../../../common/enums/auction-type.enum';
 import { LocationDetailDto } from '../../../common/dtos/location.dto';
 import { VehicleSpecsDto } from '../../../common/dtos/vehicle.dto';
+import { ParticipationFeeTier } from '../fee-policy';
 
 export class CreateAuctionDto {
   @IsString()
@@ -79,6 +80,9 @@ export class CreateAuctionDto {
     message: 'priceStep must be a decimal string',
   })
   priceStep!: string;
+
+  @IsEnum(ParticipationFeeTier)
+  participationFeeTier!: ParticipationFeeTier;
 
   @IsOptional()
   @Type(() => Number)

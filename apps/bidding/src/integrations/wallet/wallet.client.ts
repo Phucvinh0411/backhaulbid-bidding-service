@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 export interface WalletOperationInput {
   auctionId: string;
-  registrationId: string;
+  registrationId?: string;
   amount: string;
   purpose: string;
   idempotencyKey: string;

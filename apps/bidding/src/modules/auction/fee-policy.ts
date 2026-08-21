@@ -43,3 +43,30 @@ export function calculateParticipationFee(
     amount: '200000',
   };
 }
+
+export enum CreationFeeTier {
+  LEVEL_1 = 'LEVEL_1', // < 10m
+  LEVEL_2 = 'LEVEL_2', // < 50m
+  LEVEL_3 = 'LEVEL_3', // >= 50m
+}
+
+export interface CreationFeeQuote {
+  tier: CreationFeeTier;
+  amount: string;
+}
+
+export function calculateCreationFee(maxPrice: number): CreationFeeQuote {
+  if (!Number.isFinite(maxPrice) || maxPrice <= 0) {
+    throw new Error('maxPrice must be greater than zero');
+  }
+
+  if (maxPrice < 10_000_000) {
+    return { tier: CreationFeeTier.LEVEL_1, amount: '50000' };
+  }
+
+  if (maxPrice < 50_000_000) {
+    return { tier: CreationFeeTier.LEVEL_2, amount: '100000' };
+  }
+
+  return { tier: CreationFeeTier.LEVEL_3, amount: '150000' };
+}

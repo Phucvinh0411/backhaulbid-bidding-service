@@ -3,7 +3,7 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import { AuctionStatus } from '../../../common/enums/auction-status.enum';
 import { AuctionType } from '../../../common/enums/auction-type.enum';
-import { ParticipationFeeTier } from '../fee-policy';
+import { ParticipationFeeTier, CreationFeeTier } from '../fee-policy';
 import {
   LocationDetail,
   LocationDetailSchema,
@@ -89,6 +89,12 @@ export class Auction {
 
   @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
   participationFeeAmount!: Types.Decimal128;
+
+  @Prop({ type: String, enum: CreationFeeTier, required: true })
+  creationFeeTier!: CreationFeeTier;
+
+  @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
+  creationFeeAmount!: Types.Decimal128;
 
   @Prop({ type: Date, default: null })
   registrationStartTime!: Date | null;
