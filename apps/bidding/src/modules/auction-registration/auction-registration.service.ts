@@ -129,6 +129,15 @@ export class AuctionRegistrationService {
       };
     }
 
+    if (registration.status === RegistrationStatus.CANCELLED) {
+      return {
+        canRegister: false,
+        canEnter: false,
+        accessStatus: 'REGISTRATION_CANCELLED',
+        registrationId: registration._id,
+      };
+    }
+
     if (registration.paymentStatus !== RegistrationPaymentStatus.COMPLETED) {
       return {
         canRegister: false,

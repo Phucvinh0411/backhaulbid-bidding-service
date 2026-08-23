@@ -15,6 +15,13 @@ export class AuctionRepository {
     return created.save();
   }
 
+  async findByIdempotencyKey(
+    shipperId: string,
+    creationIdempotencyKey: string,
+  ): Promise<AuctionDocument | null> {
+    return this.model.findOne({ shipperId, creationIdempotencyKey }).exec();
+  }
+
   async findById(id: string): Promise<AuctionDocument | null> {
     return this.model.findById(id).exec();
   }

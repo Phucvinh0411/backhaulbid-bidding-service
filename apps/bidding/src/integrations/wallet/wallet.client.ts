@@ -40,7 +40,14 @@ export class WalletClient {
   }
 
   hold(accountId: string, input: WalletOperationInput) {
-    return this.request(`/internal/wallets/${accountId}/holds`, input);
+    return this.request(`/internal/wallets/${accountId}/holds`, input).then(
+      (operation) => ({
+        ...operation,
+        // Wallet Service uses the successful freeze transaction as the hold
+        // record. Keep older wallet deployments compatible with that contract.
+        holdId: operation.holdId ?? operation.transactionId,
+      }),
+    );
   }
 
   charge(accountId: string, input: WalletOperationInput) {

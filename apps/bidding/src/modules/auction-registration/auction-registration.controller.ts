@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -25,10 +26,12 @@ export class AuctionRegistrationController {
   register(
     @Param('auctionId') auctionId: string,
     @Headers('x-user-id') carrierId: string | undefined,
+    @Headers('x-user-role') role: string | undefined,
     @Body() dto: RegisterAuctionDto,
   ) {
     if (!carrierId)
       throw new UnauthorizedException('Authenticated carrier is required');
+    requireRole(role, 'CARRIER');
     return this.registrationService.register(auctionId, carrierId, dto);
   }
 
@@ -36,9 +39,11 @@ export class AuctionRegistrationController {
   access(
     @Param('auctionId') auctionId: string,
     @Headers('x-user-id') carrierId: string | undefined,
+    @Headers('x-user-role') role: string | undefined,
   ) {
     if (!carrierId)
       throw new UnauthorizedException('Authenticated carrier is required');
+    requireRole(role, 'CARRIER');
     return this.registrationService.getAccess(auctionId, carrierId);
   }
 
@@ -47,10 +52,12 @@ export class AuctionRegistrationController {
     @Param('auctionId') auctionId: string,
     @Param('registrationId') registrationId: string,
     @Headers('x-user-id') carrierId: string | undefined,
+    @Headers('x-user-role') role: string | undefined,
     @Body() dto: RetryPaymentDto,
   ) {
     if (!carrierId)
       throw new UnauthorizedException('Authenticated carrier is required');
+    requireRole(role, 'CARRIER');
     return this.registrationService.retryPayment(
       auctionId,
       registrationId,
@@ -64,9 +71,11 @@ export class AuctionRegistrationController {
     @Param('auctionId') auctionId: string,
     @Param('registrationId') registrationId: string,
     @Headers('x-user-id') carrierId: string | undefined,
+    @Headers('x-user-role') role: string | undefined,
   ) {
     if (!carrierId)
       throw new UnauthorizedException('Authenticated carrier is required');
+    requireRole(role, 'CARRIER');
     return this.registrationService.cancel(
       auctionId,
       registrationId,
@@ -77,11 +86,19 @@ export class AuctionRegistrationController {
   @Post('release-loser-deposits')
   releaseLoserDeposits(
     @Param('auctionId') auctionId: string,
+    @Headers('x-user-role') role: string | undefined,
     @Body('winningCarrierId') winningCarrierId?: string,
   ) {
+    requireRole(role, 'ADMIN');
     return this.registrationService.releaseLoserDeposits(
       auctionId,
       winningCarrierId,
     );
+  }
+}
+
+function requireRole(role: string | undefined, expected: string) {
+  if ((role || '').toUpperCase() !== expected) {
+    throw new ForbiddenException(`Required role: ${expected}`);
   }
 }

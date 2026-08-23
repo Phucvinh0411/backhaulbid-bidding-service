@@ -1,0 +1,5 @@
+export enum CreationFeeStatus {
+  HELD = 'HELD',
+  SETTLED = 'SETTLED',
+  RECONCILIATION_REQUIRED = 'RECONCILIATION_REQUIRED',
+}

@@ -20,9 +20,16 @@ export class Bid {
 
   @Prop({ type: Date, default: Date.now, index: true })
   bidTime!: Date;
+
+  @Prop({ type: String, default: null })
+  idempotencyKey!: string | null;
 }
 
 export const BidSchema = SchemaFactory.createForClass(Bid);
 BidSchema.index({ auctionId: 1, bidTime: -1 });
 BidSchema.index({ auctionId: 1, bidAmount: 1 });
 BidSchema.index({ auctionId: 1, carrierId: 1 });
+BidSchema.index(
+  { auctionId: 1, carrierId: 1, idempotencyKey: 1 },
+  { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } },
+);

@@ -3,6 +3,7 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import { AuctionStatus } from '../../../common/enums/auction-status.enum';
 import { AuctionType } from '../../../common/enums/auction-type.enum';
+import { CreationFeeStatus } from '../../../common/enums/creation-fee-status.enum';
 import { ParticipationFeeTier, CreationFeeTier } from '../fee-policy';
 import {
   LocationDetail,
@@ -96,6 +97,22 @@ export class Auction {
   @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
   creationFeeAmount!: Types.Decimal128;
 
+  @Prop({ type: String, default: null, index: true })
+  creationIdempotencyKey!: string | null;
+
+  @Prop({
+    type: String,
+    enum: CreationFeeStatus,
+    default: CreationFeeStatus.SETTLED,
+  })
+  creationFeeStatus!: CreationFeeStatus;
+
+  @Prop({ type: String, default: null })
+  creationFeeHoldId!: string | null;
+
+  @Prop({ type: String, default: null })
+  creationFeeTransactionId!: string | null;
+
   @Prop({ type: Date, default: null })
   registrationStartTime!: Date | null;
 
@@ -131,5 +148,14 @@ export class Auction {
 
 export const AuctionSchema = SchemaFactory.createForClass(Auction);
 AuctionSchema.index({ shipperId: 1, createdAt: -1 });
+AuctionSchema.index(
+  { shipperId: 1, creationIdempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      creationIdempotencyKey: { $type: 'string' },
+    },
+  },
+);
 AuctionSchema.index({ status: 1, startTime: 1 });
 AuctionSchema.index({ status: 1, endTime: 1 });

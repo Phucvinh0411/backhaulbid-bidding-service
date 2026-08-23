@@ -30,6 +30,13 @@ export class NotificationGateway
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
+    const userId = this.trustedUserId(client);
+    if (userId) {
+      this.joinUser(client, userId);
+      return;
+    }
+    this.logger.warn(`Disconnecting unidentified socket ${client.id}`);
+    client.disconnect(true);
   }
 
   handleDisconnect(client: Socket) {
@@ -47,22 +54,29 @@ export class NotificationGateway
 
   @SubscribeMessage('identify')
   handleIdentify(
-    @MessageBody() data: { userId: string },
+    @MessageBody() _data: { userId?: string },
     @ConnectedSocket() client: Socket,
   ) {
-    if (data && data.userId) {
-      this.logger.log(`Socket ${client.id} identified as user ${data.userId}`);
-      if (!this.userSockets.has(data.userId)) {
-        this.userSockets.set(data.userId, new Set());
-      }
-      this.userSockets.get(data.userId)?.add(client.id);
-
-      // Also join a room for this user for easy broadcasting
-      client.join(data.userId);
-
+    const userId = this.trustedUserId(client);
+    if (userId) {
+      this.joinUser(client, userId);
       return { status: 'success', message: 'Identified successfully' };
     }
-    return { status: 'error', message: 'Missing userId' };
+    return { status: 'error', message: 'Authenticated user is required' };
+  }
+
+  private trustedUserId(client: Socket): string | undefined {
+    const header = client.handshake.headers['x-user-id'];
+    return Array.isArray(header) ? header[0] : header;
+  }
+
+  private joinUser(client: Socket, userId: string) {
+    this.logger.log(`Socket ${client.id} identified as user ${userId}`);
+    if (!this.userSockets.has(userId)) {
+      this.userSockets.set(userId, new Set());
+    }
+    this.userSockets.get(userId)?.add(client.id);
+    client.join(userId);
   }
 
   public notifyUser(userId: string, notification: NotificationDocument) {
