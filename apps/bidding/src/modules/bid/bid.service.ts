@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AuctionService } from '../auction/auction.service';
 import { AuctionStatus } from '../../common/enums/auction-status.enum';
+import { AuctionType } from '../../common/enums/auction-type.enum';
 import { AuctionRegistrationService } from '../auction-registration/auction-registration.service';
 import { ListBidsQueryDto } from './dto/list-bids-query.dto';
 import { PlaceBidDto } from './dto/place-bid.dto';
@@ -61,7 +62,7 @@ export class BidService {
         }
       }
 
-      if (auction.auctionType !== 'SEALED') {
+      if (auction.auctionType !== AuctionType.SEALED) {
         const currentLowest = await this.bidModel
           .findOne({ auctionId })
           .sort({ bidAmount: 1, bidTime: 1 })
@@ -102,7 +103,7 @@ export class BidService {
     const auction = await this.auctionService.findById(auctionId);
     const sort = query.sortOrder === 'asc' ? 1 : -1;
     const filter =
-      auction.auctionType === 'SEALED' && role === 'CARRIER'
+      auction.auctionType === AuctionType.SEALED && role === 'CARRIER'
         ? { auctionId, carrierId: viewerId }
         : { auctionId };
     const skip = (query.page - 1) * query.pageSize;

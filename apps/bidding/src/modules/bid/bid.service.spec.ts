@@ -92,14 +92,14 @@ describe('BidService (Bidding Rules)', () => {
         ),
       }),
     }));
-    mockBidModel.create.mockImplementation(async (data: any) => {
+    mockBidModel.create.mockImplementation((data: any) => {
       storedBidCount += 1;
       currentLowest = data.bidAmount.toString();
-      return {
+      return Promise.resolve({
         _id: `bid-${storedBidCount}`,
         ...data,
         bidAmount: data.bidAmount,
-      };
+      });
     });
 
     const results = await Promise.allSettled([

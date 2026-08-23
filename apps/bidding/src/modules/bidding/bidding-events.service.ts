@@ -41,7 +41,7 @@ export class BiddingEventsService {
   ): void {
     if (!this.server) return;
     const payload =
-      auctionType === AuctionType.SEALED
+      auctionType === (AuctionType.SEALED as string)
         ? { auctionId, sealed: true }
         : { auctionId, bid };
     this.server.to(auctionRoom(auctionId)).emit('bidPlaced', payload);
