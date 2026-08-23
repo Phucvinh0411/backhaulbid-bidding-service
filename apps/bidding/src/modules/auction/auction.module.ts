@@ -6,6 +6,7 @@ import { Auction, AuctionSchema } from './schemas/auction.schema';
 import { AuctionRepository } from './auction.repository';
 
 import { Bid, BidSchema } from '../bid/schemas/bid.schema';
+import { BiddingEventsModule } from '../bidding/bidding-events.module';
 
 import { WalletModule } from '../../integrations/wallet/wallet.module';
 
@@ -16,9 +17,12 @@ import { WalletModule } from '../../integrations/wallet/wallet.module';
       { name: Bid.name, schema: BidSchema },
     ]),
     WalletModule,
+    BiddingEventsModule,
   ],
   controllers: [AuctionController],
   providers: [AuctionRepository, AuctionService],
   exports: [AuctionService],
 })
 export class AuctionModule {}
+
+

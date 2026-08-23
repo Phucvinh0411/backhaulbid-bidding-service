@@ -1,9 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AuctionRegistrationModule } from '../auction-registration/auction-registration.module';
+import { AuctionModule } from '../auction/auction.module';
+import { BidModule } from '../bid/bid.module';
+import { BiddingEventsModule } from './bidding-events.module';
 import { BiddingGateway } from './bidding.gateway';
 
 @Module({
-  imports: [AuctionRegistrationModule],
+  imports: [
+    AuctionRegistrationModule,
+    AuctionModule,
+    BidModule,
+    BiddingEventsModule,
+  ],
   providers: [BiddingGateway],
   exports: [BiddingGateway],
 })
