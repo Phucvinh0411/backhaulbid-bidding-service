@@ -378,4 +378,82 @@ describe('AuctionService (Fraud Flag & Lifecycle)', () => {
     expect(result.creationFeeTier).toBe('LEVEL_2');
     expect(result.creationFeeAmount).toBe('100000');
   });
+
+  it('rejects update when reducing maxPrice below existing required deposit', async () => {
+    const now = Date.now();
+    const pendingAuction: any = {
+      _id: 'auction-update-1',
+      shipperId: 'shipper-1',
+      status: AuctionStatus.PENDING,
+      registrationStartTime: new Date(now - 5_000),
+      registrationEndTime: new Date(now + 60_000),
+      startTime: new Date(now + 120_000),
+      endTime: new Date(now + 600_000),
+      maxPrice: { toString: () => '5000000.00' },
+      priceStep: { toString: () => '100000.00' },
+      isDepositRequired: true,
+      depositAmount: { toString: () => '2000000.00' },
+      participationFeeAmount: { toString: () => '20000' },
+      creationFeeTier: 'LEVEL_1',
+      creationFeeAmount: { toString: () => '50000' },
+      save: jest.fn().mockResolvedValue(true),
+    };
+    mockAuctionRepo.findById.mockResolvedValue(pendingAuction);
+
+    await expect(
+      service.update('auction-update-1', 'shipper-1', 'SHIPPER', {
+        maxPrice: '1000000',
+      } as any),
+    ).rejects.toThrow('depositAmount cannot exceed maxPrice');
+
+    expect(mockAuctionRepo.updateById).not.toHaveBeenCalled();
+  });
+
+  it('stores cancellation reason when shipper cancels an auction', async () => {
+    const now = Date.now();
+    const cancellableAuction: any = {
+      _id: 'auction-cancel-1',
+      shipperId: 'shipper-1',
+      status: AuctionStatus.OPEN,
+      registrationStartTime: new Date(now - 300_000),
+      registrationEndTime: new Date(now - 240_000),
+      startTime: new Date(now - 180_000),
+      endTime: new Date(now + 180_000),
+      title: 'Auction to cancel',
+      goodsType: 'General goods',
+      weight: 3,
+      vehicleTypeRequired: 'TRUCK_SMALL',
+      origin: 'A',
+      destination: 'B',
+      maxPrice: { toString: () => '3000000.00' },
+      priceStep: { toString: () => '50000.00' },
+      participationFeeTier: 'LEVEL_2',
+      participationFeeAmount: { toString: () => '20000' },
+      creationFeeTier: 'LEVEL_1',
+      creationFeeAmount: { toString: () => '50000' },
+      isDepositRequired: false,
+      images: [],
+      notes: null,
+      winningBidId: null,
+      cancellationReason: null,
+      fraudFlag: false,
+      fraudReason: null,
+      save: jest.fn().mockResolvedValue(true),
+      createdAt: new Date(now - 600_000),
+      updatedAt: new Date(now),
+    };
+    mockAuctionRepo.findById.mockResolvedValue(cancellableAuction);
+
+    const result = await service.cancel(
+      'auction-cancel-1',
+      'shipper-1',
+      'SHIPPER',
+      'Đổi kế hoạch giao nhận',
+    );
+
+    expect(cancellableAuction.status).toBe(AuctionStatus.CANCELLED);
+    expect(cancellableAuction.cancellationReason).toBe('Đổi kế hoạch giao nhận');
+    expect(cancellableAuction.save).toHaveBeenCalled();
+    expect(result.cancellationReason).toBe('Đổi kế hoạch giao nhận');
+  });
 });

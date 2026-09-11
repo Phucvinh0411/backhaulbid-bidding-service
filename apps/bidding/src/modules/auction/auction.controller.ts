@@ -17,6 +17,7 @@ import { ListAuctionsQueryDto } from './dto/list-auctions-query.dto';
 import { UpdateAuctionDto } from './dto/update-auction.dto';
 import { FlagAuctionDto } from './dto/flag-auction.dto';
 import { SelectWinnerDto } from './dto/select-winner.dto';
+import { CancelAuctionDto } from './dto/cancel-auction.dto';
 import { Query } from '@nestjs/common';
 
 @Controller('auctions')
@@ -38,8 +39,20 @@ export class AuctionController {
   }
 
   @Get()
-  list(@Query() query: ListAuctionsQueryDto) {
-    return this.auctionService.list(query);
+  list(
+    @Headers('x-user-id') actorId: string | undefined,
+    @Headers('x-user-role') role: string | undefined,
+    @Query() query: ListAuctionsQueryDto,
+  ) {
+    const normalizedRole = normalizeRole(role);
+    if (normalizedRole === 'SHIPPER') {
+      requireAuthenticated(actorId);
+      return this.auctionService.list({ ...query, shipperId: actorId });
+    }
+    if (normalizedRole === 'ADMIN' || normalizedRole === 'CARRIER') {
+      return this.auctionService.list(query);
+    }
+    throw new ForbiddenException('Unsupported auction listing role');
   }
 
   @Get(':auctionId')
@@ -80,10 +93,16 @@ export class AuctionController {
     @Param('auctionId') auctionId: string,
     @Headers('x-user-id') actorId: string | undefined,
     @Headers('x-user-role') role: string | undefined,
+    @Body() dto: CancelAuctionDto,
   ) {
     requireAuthenticated(actorId);
     requireRole(role, 'ADMIN', 'SHIPPER');
-    return this.auctionService.cancel(auctionId, actorId, normalizeRole(role));
+    return this.auctionService.cancel(
+      auctionId,
+      actorId,
+      normalizeRole(role),
+      dto.reason,
+    );
   }
 
   @Post(':auctionId/fraud-flag')

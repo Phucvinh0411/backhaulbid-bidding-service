@@ -65,9 +65,25 @@ export class BiddingGateway implements OnGatewayInit, OnModuleInit {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: RegisterDevicePayload,
   ) {
-    if (payload?.companyId) {
-      client.join(`company:${payload.companyId}`);
+    const userId = readHeader(client, 'x-user-id');
+    const role = (readHeader(client, 'x-user-role') || '').toUpperCase();
+    if (!userId) {
+      throw new WsException('Authenticated user is required');
     }
+    if (!['CARRIER', 'ADMIN'].includes(role)) {
+      throw new WsException('Only carriers or admins can register devices');
+    }
+
+    const targetCompanyId = (payload?.companyId || '').trim();
+    if (!targetCompanyId) {
+      throw new WsException('companyId is required');
+    }
+
+    if (role !== 'ADMIN' && targetCompanyId !== userId) {
+      throw new WsException('companyId does not match authenticated account');
+    }
+
+    client.join(`company:${targetCompanyId}`);
     return { event: 'device_registered', data: { success: true } };
   }
 
@@ -196,7 +212,7 @@ export class BiddingGateway implements OnGatewayInit, OnModuleInit {
           const notificationServiceUrl =
             process.env.NOTIFICATION_SERVICE_URL ||
             'http://backhaulbid-notification-service:3002';
-          await fetch(`${notificationServiceUrl}/api/v1/notifications/internal/create`, {
+          const response = await fetch(`${notificationServiceUrl}/api/v1/notifications/internal/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -207,6 +223,10 @@ export class BiddingGateway implements OnGatewayInit, OnModuleInit {
               type: 'NEW_AUCTION'
             })
           });
+          if (!response.ok) {
+            const body = await response.text().catch(() => '');
+            console.error('Failed to create internal notification:', response.status, body);
+          }
         } catch (err) {
           console.error('Failed to create internal notification', err);
         }
@@ -229,8 +249,10 @@ export class BiddingGateway implements OnGatewayInit, OnModuleInit {
               body: JSON.stringify({
                 origin: auction.origin,
                 destination: auction.destination,
-                weight: auction.weight,
-                latestPickup: auction.pickupLocation?.latestTime,
+                latestPickup:
+                  auction.latestPickup ||
+                  auction.pickupLocation?.latestTime ||
+                  auction.pickupLocation?.timeWindowEnd,
                 vehicleTypeRequired: auction.vehicleTypeRequired,
               }),
             },
