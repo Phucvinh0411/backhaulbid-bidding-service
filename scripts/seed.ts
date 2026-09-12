@@ -62,10 +62,10 @@ const sampleAuctions = [
     shipperId: '3b2b78c5-f7ef-441f-ade7-d7754528fedb',
     title: 'Vận chuyển linh kiện điện tử',
     goodsType: 'Linh kiện điện tử Samsung',
-    weight: 5.2,
+    weight: 5200,
     volume: 28,
     goodsValue: mongoose.Types.Decimal128.fromString('250000000'),
-    vehicleTypeRequired: 'Xe tải thùng kín',
+    vehicleTypeRequired: 'TRUCK_MEDIUM',
     requiredTemp: '25',
     vehicleSpecs: {
       length: 6.5,
@@ -101,17 +101,17 @@ const sampleAuctions = [
     registrationEndTime: new Date(Date.now() + 3600000 * 2), // 2 hours from now
     startTime: new Date(Date.now() - 1800000), // Started 30 mins ago
     endTime: new Date(Date.now() + 3600000 * 24), // Ends in 24 hours
-    status: 'ACTIVE'
+    status: 'OPEN'
   },
   {
     _id: 'LH-2026-9042',
     shipperId: '3b2b78c5-f7ef-441f-ade7-d7754528fedb',
     title: 'Vận chuyển Nông sản',
     goodsType: 'Nông sản khô (Hạt điều)',
-    weight: 15.0,
+    weight: 15000,
     volume: 60,
     goodsValue: mongoose.Types.Decimal128.fromString('180000000'),
-    vehicleTypeRequired: 'Xe tải thùng bạt',
+    vehicleTypeRequired: 'TRUCK_HEAVY',
     requiredTemp: '',
     vehicleSpecs: {
       length: 9.0,
@@ -154,10 +154,10 @@ const sampleAuctions = [
     shipperId: '3b2b78c5-f7ef-441f-ade7-d7754528fedb',
     title: 'Vận chuyển Thủy hải sản',
     goodsType: 'Thủy sản đông lạnh',
-    weight: 8.5,
+    weight: 8500,
     volume: 45,
     goodsValue: mongoose.Types.Decimal128.fromString('400000000'),
-    vehicleTypeRequired: 'Xe tải lạnh (Container lạnh)',
+    vehicleTypeRequired: 'REFRIGERATED_TRUCK',
     requiredTemp: '-18',
     vehicleSpecs: {
       length: 12.0,
@@ -193,7 +193,7 @@ const sampleAuctions = [
     registrationEndTime: new Date(Date.now() - 3600000 * 2), 
     startTime: new Date(Date.now() - 3600000 * 1), // Started 1h ago
     endTime: new Date(Date.now() + 3600000 * 5), // Ends in 5 hours
-    status: 'ACTIVE'
+    status: 'OPEN'
   }
 ];
 

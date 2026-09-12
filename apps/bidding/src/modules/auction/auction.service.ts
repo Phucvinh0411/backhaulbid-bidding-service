@@ -289,6 +289,20 @@ export class AuctionService {
       }
       update.depositAmount = depositAmount.toFixed(2);
     }
+    if (
+      dto.maxPrice !== undefined &&
+      dto.depositAmount === undefined &&
+      dto.isDepositRequired !== false &&
+      update.depositAmount !== null
+    ) {
+      const maxPrice = Number(update.maxPrice ?? auction.maxPrice.toString());
+      const currentDeposit = Number(
+        update.depositAmount ?? auction.depositAmount?.toString() ?? 0,
+      );
+      if (currentDeposit > maxPrice) {
+        throw new BadRequestException('depositAmount cannot exceed maxPrice');
+      }
+    }
 
     const updated = await this.auctionRepo.updateById(auctionId, update);
     if (!updated) throw new NotFoundException('Auction not found');
@@ -315,7 +329,12 @@ export class AuctionService {
     return this.serialize(auction);
   }
 
-  async cancel(auctionId: string, actorId: string, role: string) {
+  async cancel(
+    auctionId: string,
+    actorId: string,
+    role: string,
+    reason?: string,
+  ) {
     const auction = await this.getAndSynchronizeStatus(auctionId);
     this.assertOwnerOrAdmin(auction, actorId, role);
     if (![AuctionStatus.PENDING, AuctionStatus.OPEN].includes(auction.status)) {
@@ -324,6 +343,7 @@ export class AuctionService {
       );
     }
     auction.status = AuctionStatus.CANCELLED;
+    auction.cancellationReason = reason?.trim() || null;
     await auction.save();
     this.emitStatus(auction);
     return this.serialize(auction);
@@ -591,6 +611,7 @@ export class AuctionService {
         now >= auction.startTime &&
         now < auction.endTime,
       winningBidId: auction.winningBidId ?? null,
+      cancellationReason: auction.cancellationReason ?? null,
       fraudFlag: auction.fraudFlag ?? false,
       fraudReason: auction.fraudReason ?? null,
       createdAt: auction.createdAt,

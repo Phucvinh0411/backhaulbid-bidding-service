@@ -136,6 +136,9 @@ export class Auction {
   @Prop({ type: String, default: null })
   winningBidId!: string | null;
 
+  @Prop({ type: String, default: null, trim: true })
+  cancellationReason!: string | null;
+
   @Prop({ type: Boolean, default: false })
   fraudFlag!: boolean;
 

@@ -80,4 +80,26 @@ describe('BiddingGateway realtime auction protocol', () => {
     expect(socket.join).toHaveBeenCalledWith(MONITOR_ROOM);
     expect(socket.data).toMatchObject({ userId: 'admin-1', role: 'ADMIN' });
   });
+
+  it('registers carrier devices only for their own company room', () => {
+    const socket = createSocket({ 'x-user-id': 'carrier-1', 'x-user-role': 'CARRIER' });
+
+    const result = gateway.handleRegisterDevice(socket as any, {
+      companyId: 'carrier-1',
+    });
+
+    expect(socket.join).toHaveBeenCalledWith('company:carrier-1');
+    expect(result).toEqual({ event: 'device_registered', data: { success: true } });
+  });
+
+  it('rejects spoofed company-room registration', () => {
+    const socket = createSocket({ 'x-user-id': 'carrier-1', 'x-user-role': 'CARRIER' });
+
+    expect(() =>
+      gateway.handleRegisterDevice(socket as any, {
+        companyId: 'carrier-2',
+      }),
+    ).toThrow(WsException);
+    expect(socket.join).not.toHaveBeenCalled();
+  });
 });
